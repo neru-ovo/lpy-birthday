@@ -1,0 +1,185 @@
+import { PhotoAlbum, Diary, Message } from '../types';
+
+const getPhotoUrl = (filename: string) => `/photos/${filename}`;
+
+export const mockPhotoAlbums: PhotoAlbum[] = [
+  {
+    id: '1',
+    title: '红海湾',
+    description: '海边的风景总是那么治愈，和你一起看海的时光最难忘',
+    location: '红海湾',
+    date: '2023',
+    photos: [
+      { id: 'p1', url: getPhotoUrl('微信图片_20260623154640_106_16.jpg'), description: '海边的风景', likes: 0 },
+      { id: 'p2', url: getPhotoUrl('微信图片_20260623154642_107_16.jpg'), description: '和你一起看海', likes: 0 },
+      { id: 'p3', url: getPhotoUrl('微信图片_20260623154643_108_16.jpg'), description: '海风轻轻吹', likes: 0 },
+      { id: 'p4', url: getPhotoUrl('微信图片_20260623154645_109_16.jpg'), description: '海边的日落', likes: 0 },
+      { id: 'p5', url: getPhotoUrl('微信图片_20260623154646_110_16.jpg'), description: '一起在海边漫步', likes: 0 },
+    ],
+  },
+  {
+    id: '2',
+    title: '禅城',
+    description: '一起探索城市的角落',
+    location: '禅城',
+    date: '2024',
+    photos: [
+      { id: 'p6', url: getPhotoUrl('微信图片_20260623154649_112_16.jpg'), description: '城市漫步', likes: 0 },
+      { id: 'p7', url: getPhotoUrl('微信图片_20260623154650_113_16.jpg'), description: '禅城街头', likes: 0 },
+      { id: 'p8', url: getPhotoUrl('微信图片_20260623154658_117_16.jpg'), description: '美好时光', likes: 0 },
+    ],
+  },
+  {
+    id: '3',
+    title: '顺德之旅二',
+    description: '顺德美食之旅',
+    location: '顺德',
+    date: '2024',
+    photos: [
+      { id: 'p9', url: getPhotoUrl('微信图片_20260623154652_114_16.jpg'), description: '美食之旅', likes: 0 },
+      { id: 'p10', url: getPhotoUrl('微信图片_20260623154654_115_16.jpg'), description: '吃遍顺德', likes: 0 },
+      { id: 'p11', url: getPhotoUrl('微信图片_20260623154656_116_16.jpg'), description: '美景美食', likes: 0 },
+    ],
+  },
+  {
+    id: '4',
+    title: '好多日常',
+    description: '生活中的点点滴滴，都是美好的回忆',
+    location: '日常',
+    date: '2024',
+    photos: [
+      { id: 'p12', url: getPhotoUrl('微信图片_20260623154647_111_16.jpg'), description: '小确幸', likes: 0 },
+      { id: 'p13', url: getPhotoUrl('微信图片_20260623154659_118_16.jpg'), description: '点点滴滴', likes: 0 },
+      { id: 'p14', url: getPhotoUrl('微信图片_20260623154701_119_16.jpg'), description: '每一天', likes: 0 },
+      { id: 'p15', url: getPhotoUrl('微信图片_20260623154705_121_16.jpg'), description: '美好瞬间', likes: 0 },
+      { id: 'p16', url: getPhotoUrl('微信图片_20260623154710_124_16.jpg'), description: '度过的时光', likes: 0 },
+      { id: 'p17', url: getPhotoUrl('微信图片_20260623154711_125_16.jpg'), description: '简单快乐', likes: 0 },
+      { id: 'p18', url: getPhotoUrl('微信图片_20260623154720_129_16.jpg'), description: '平凡幸福', likes: 0 },
+    ],
+  },
+  {
+    id: '5',
+    title: '爬山',
+    description: '一起征服山峰，欣赏美丽风景',
+    location: '圭峰山',
+    date: '2024',
+    photos: [
+      { id: 'p19', url: getPhotoUrl('微信图片_20260623154703_120_16.jpg'), description: '征服山峰', likes: 0 },
+      { id: 'p20', url: getPhotoUrl('微信图片_20260623154706_122_16.jpg'), description: '欣赏风景', likes: 0 },
+      { id: 'p21', url: getPhotoUrl('微信图片_20260623154709_123_16.jpg'), description: '登高望远', likes: 0 },
+    ],
+  },
+  {
+    id: '6',
+    title: '吃冰',
+    description: '炎炎夏日，一起吃冰的快乐',
+    location: '甜品店',
+    date: '2024',
+    photos: [
+      { id: 'p22', url: getPhotoUrl('微信图片_20260623154714_126_16.jpg'), description: '夏日清凉', likes: 0 },
+      { id: 'p23', url: getPhotoUrl('微信图片_20260623154716_127_16.jpg'), description: '一起吃冰', likes: 0 },
+      { id: 'p24', url: getPhotoUrl('微信图片_20260623154718_128_16.jpg'), description: '清凉时光', likes: 0 },
+      { id: 'p25', url: getPhotoUrl('微信图片_20260623154723_131_16.jpg'), description: '甜蜜回忆', likes: 0 },
+      { id: 'p26', url: getPhotoUrl('微信图片_20260623154725_132_16.jpg'), description: '冰爽一夏', likes: 0 },
+      { id: 'p27', url: getPhotoUrl('微信图片_20260623154728_133_16.jpg'), description: '夏日小确幸', likes: 0 },
+    ],
+  },
+  {
+    id: '7',
+    title: '篮球赛',
+    description: '一起为喜欢的球队加油',
+    location: '体育馆',
+    date: '2024',
+    photos: [
+      { id: 'p28', url: getPhotoUrl('微信图片_20260623154721_130_16.jpg'), description: '为球队加油', likes: 0 },
+      { id: 'p29', url: getPhotoUrl('微信图片_20260623154733_136_16.jpg'), description: '热血沸腾', likes: 0 },
+      { id: 'p30', url: getPhotoUrl('微信图片_20260623154734_137_16.jpg'), description: '一起看球', likes: 0 },
+    ],
+  },
+  {
+    id: '8',
+    title: '顺德',
+    description: '顺德美食之旅',
+    location: '顺德',
+    date: '2024',
+    photos: [
+      { id: 'p31', url: getPhotoUrl('微信图片_20260623154730_134_16.jpg'), description: '美食之旅', likes: 0 },
+      { id: 'p32', url: getPhotoUrl('微信图片_20260623154732_135_16.jpg'), description: '地道美食', likes: 0 },
+    ],
+  },
+  {
+    id: '9',
+    title: '奎山公园',
+    description: '公园散步，享受悠闲时光',
+    location: '奎山公园',
+    date: '2024',
+    photos: [
+      { id: 'p33', url: getPhotoUrl('微信图片_20260623154736_138_16.jpg'), description: '公园散步', likes: 0 },
+      { id: 'p34', url: getPhotoUrl('微信图片_20260623154737_139_16.jpg'), description: '美好时光', likes: 0 },
+      { id: 'p35', url: getPhotoUrl('微信图片_20260623154738_140_16.jpg'), description: '散步聊天', likes: 0 },
+      { id: 'p36', url: getPhotoUrl('微信图片_20260623154740_141_16.jpg'), description: '悠闲午后', likes: 0 },
+    ],
+  },
+  {
+    id: '10',
+    title: '毕业',
+    description: '青春不散场，友谊天长地久',
+    location: '学校',
+    date: '2024-06',
+    photos: [
+      { id: 'p37', url: getPhotoUrl('微信图片_20260623154743_142_16.jpg'), description: '毕业季', likes: 0 },
+      { id: 'p38', url: getPhotoUrl('微信图片_20260623154745_143_16.jpg'), description: '青春不散', likes: 0 },
+      { id: 'p39', url: getPhotoUrl('微信图片_20260623154748_144_16.jpg'), description: '前程似锦', likes: 0 },
+      { id: 'p40', url: getPhotoUrl('微信图片_20260623154751_145_16.jpg'), description: '青春记忆', likes: 0 },
+      { id: 'p41', url: getPhotoUrl('微信图片_20260623154753_146_16.jpg'), description: '大学时光', likes: 0 },
+      { id: 'p42', url: getPhotoUrl('微信图片_20260623154756_147_16.jpg'), description: '友谊地久', likes: 0 },
+      { id: 'p43', url: getPhotoUrl('微信图片_20260623154758_148_16.jpg'), description: '毕业快乐', likes: 0 },
+    ],
+  },
+];
+
+export const mockDiaries: Diary[] = [
+  {
+    id: '1',
+    title: '红海湾之旅',
+    content: '今天和你一起去了红海湾，阳光、沙滩、大海，一切都太美了！我们在海边散步、拍照，听着海浪声，感觉所有的烦恼都消失了。晚上一起看了日落，整个天空都被染成了金色和粉色，真的太浪漫了。希望这样美好的时光能永远留在记忆里。',
+    location: '红海湾',
+    date: '2023',
+    imageUrls: [
+      getPhotoUrl('微信图片_20260623154640_106_16.jpg'),
+      getPhotoUrl('微信图片_20260623154642_107_16.jpg'),
+    ],
+  },
+  {
+    id: '2',
+    title: '毕业季',
+    content: '一转眼就毕业了，回想我们一起度过的大学时光，真的有太多美好的回忆。从第一次见面的青涩，到现在的无话不谈，我们一起经历了太多。虽然即将各奔东西，但我相信我们的友谊会一直延续下去。祝你前程似锦，未来闪闪发光！',
+    location: '学校',
+    date: '2024-06',
+    imageUrls: [
+      getPhotoUrl('微信图片_20260623154743_142_16.jpg'),
+      getPhotoUrl('微信图片_20260623154745_143_16.jpg'),
+      getPhotoUrl('微信图片_20260623154748_144_16.jpg'),
+    ],
+  },
+  {
+    id: '3',
+    title: '日常小确幸',
+    content: '今天和你一起去吃冰，简简单单的快乐却让人觉得很幸福。生活中的小确幸往往来自于和喜欢的人一起度过的时光。希望我们能一直这样，一起分享生活中的点点滴滴，一起创造更多美好的回忆。',
+    location: '甜品店',
+    date: '2024',
+    imageUrls: [
+      getPhotoUrl('微信图片_20260623154714_126_16.jpg'),
+      getPhotoUrl('微信图片_20260623154716_127_16.jpg'),
+    ],
+  },
+];
+
+export const mockMessages: Message[] = [
+  {
+    id: '1',
+    title: '生日快乐！',
+    content: '亲爱的宝贝，生日快乐！🎉\n\n不知不觉我们已经认识这么多年了，从青涩的校园时光到现在各自成长，你一直是我生命中最美好的存在。\n\n愿你新的一岁：\n✨ 眼里有光，心中有爱\n✨ 所到之处，皆是风景\n✨ 每一个梦想都能实现\n✨ 每一天都充满快乐和惊喜\n\n愿我们的友谊像这生日蛋糕一样，甜蜜又持久！永远爱你！❤️\n\n—— 你的好朋友',
+    date: '2024',
+  },
+];
