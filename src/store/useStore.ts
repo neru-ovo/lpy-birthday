@@ -22,6 +22,8 @@ interface Store {
   reorderDiaryImages: (diaryId: string, imageUrls: string[]) => void;
   reorderPhotoAlbums: (albums: PhotoAlbum[]) => void;
   reorderDiaries: (diaries: Diary[]) => void;
+  exportData: () => string;
+  importData: (data: string) => boolean;
   loadFromStorage: () => void;
   resetToMockData: () => void;
 }
@@ -211,6 +213,32 @@ export const useStore = create<Store>((set, get) => ({
       saveToStorage(STORAGE_KEY_DIARIES, diaries);
       return { diaries };
     });
+  },
+
+  exportData: () => {
+    const { photoAlbums, diaries, messages } = get();
+    return JSON.stringify({ photoAlbums, diaries, messages }, null, 2);
+  },
+
+  importData: (data: string) => {
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed.photoAlbums) {
+        saveToStorage(STORAGE_KEY_PHOTO_ALBUMS, parsed.photoAlbums);
+        set((state) => ({ ...state, photoAlbums: parsed.photoAlbums }));
+      }
+      if (parsed.diaries) {
+        saveToStorage(STORAGE_KEY_DIARIES, parsed.diaries);
+        set((state) => ({ ...state, diaries: parsed.diaries }));
+      }
+      if (parsed.messages) {
+        saveToStorage(STORAGE_KEY_MESSAGES, parsed.messages);
+        set((state) => ({ ...state, messages: parsed.messages }));
+      }
+      return true;
+    } catch {
+      return false;
+    }
   },
 
   loadFromStorage: () => {
