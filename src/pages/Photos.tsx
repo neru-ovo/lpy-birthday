@@ -2,9 +2,62 @@ import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
-import { Upload, ImagePlus, X, MapPin, Calendar, Heart, ChevronRight, GripVertical } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Upload, ImagePlus, X, MapPin, Calendar, Heart, GripVertical } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { SortableAlbumCard } from '../components/SortableAlbumCard';
+
+interface SortablePreviewItemProps {
+  id: string;
+  url: string;
+  onRemove: () => void;
+}
+
+const SortablePreviewItem = ({ id, url, onRemove }: SortablePreviewItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="relative group"
+    >
+      <img
+        src={url}
+        alt="预览"
+        className="w-full aspect-square object-cover rounded-lg"
+      />
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute top-1 left-1 p-1 bg-black/50 text-white rounded-full cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <GripVertical className="w-3 h-3" />
+      </div>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full hover:bg-black/70"
+      >
+        <X className="w-3 h-3" />
+      </button>
+    </div>
+  );
+};
 
 export const Photos = () => {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -16,8 +69,7 @@ export const Photos = () => {
     month: '',
     day: '',
   });
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
+  const [previewItems, setPreviewItems] = useState<{ id: string; url: string; file: File }[]>([]);
   const { photoAlbums, addPhotoAlbum, reorderPhotoAlbums, uploadPhoto } = useStore();
 
   const sensors = useSensors(
@@ -38,29 +90,43 @@ export const Photos = () => {
     }
   };
 
+  const handlePreviewDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = previewItems.findIndex((item) => item.id === active.id);
+      const newIndex = previewItems.findIndex((item) => item.id === over.id);
+      setPreviewItems(arrayMove(previewItems, oldIndex, newIndex));
+    }
+  };
+
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const urls: string[] = [...previewUrls];
-      const newFiles: File[] = [...uploadingFiles];
-      Array.from(files).forEach((file) => {
-        if (file.type.startsWith('image/')) {
-          newFiles.push(file);
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            urls.push(event.target?.result as string);
-            setPreviewUrls([...urls]);
+      const newItems: { id: string; url: string; file: File }[] = [];
+      const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
+      
+      let loadedCount = 0;
+      fileArray.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          newItems[index] = {
+            id: `${Date.now()}-${index}-${file.name}`,
+            url: event.target?.result as string,
+            file,
           };
-          reader.readAsDataURL(file);
-        }
+          loadedCount++;
+          if (loadedCount === fileArray.length) {
+            setPreviewItems(prev => [...prev, ...newItems.filter(Boolean)]);
+          }
+        };
+        reader.readAsDataURL(file);
       });
-      setUploadingFiles(newFiles);
     }
-  }, [previewUrls, uploadingFiles]);
+  }, []);
 
-  const removePreview = (index: number) => {
-    setPreviewUrls(previewUrls.filter((_, i) => i !== index));
-    setUploadingFiles(uploadingFiles.filter((_, i) => i !== index));
+  const removePreview = (id: string) => {
+    setPreviewItems(previewItems.filter((item) => item.id !== id));
   };
 
   const getDateValue = () => {
@@ -76,16 +142,15 @@ export const Photos = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (uploadingFiles.length === 0) return;
+    if (previewItems.length === 0) return;
 
     try {
       const photoUrls = await Promise.all(
-        uploadingFiles.map(async (file, index) => {
-          // 处理文件名：移除中文字符，只保留扩展名
-          const ext = file.name.split('.').pop() || 'jpg';
+        previewItems.map(async (item, index) => {
+          const ext = item.file.name.split('.').pop() || 'jpg';
           const safeName = `${Date.now()}-${index}.${ext}`;
           const path = `albums/${safeName}`;
-          return await uploadPhoto(file, path);
+          return await uploadPhoto(item.file, path);
         })
       );
 
@@ -103,8 +168,7 @@ export const Photos = () => {
       });
 
       setIsUploadOpen(false);
-      setPreviewUrls([]);
-      setUploadingFiles([]);
+      setPreviewItems([]);
       setFormData({
         title: '',
         description: '',
@@ -125,23 +189,28 @@ export const Photos = () => {
       e.preventDefault();
       const files = e.dataTransfer.files;
       if (files) {
-        const urls: string[] = [...previewUrls];
-        const newFiles: File[] = [...uploadingFiles];
-        Array.from(files).forEach((file) => {
-          if (file.type.startsWith('image/')) {
-            newFiles.push(file);
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              urls.push(event.target?.result as string);
-              setPreviewUrls([...urls]);
+        const newItems: { id: string; url: string; file: File }[] = [];
+        const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
+        
+        let loadedCount = 0;
+        fileArray.forEach((file, index) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            newItems[index] = {
+              id: `${Date.now()}-${index}-${file.name}`,
+              url: event.target?.result as string,
+              file,
             };
-            reader.readAsDataURL(file);
-          }
+            loadedCount++;
+            if (loadedCount === fileArray.length) {
+              setPreviewItems(prev => [...prev, ...newItems.filter(Boolean)]);
+            }
+          };
+          reader.readAsDataURL(file);
         });
-        setUploadingFiles(newFiles);
       }
     },
-    [previewUrls, uploadingFiles]
+    []
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -226,8 +295,7 @@ export const Photos = () => {
               <button
                 onClick={() => {
                   setIsUploadOpen(false);
-                  setPreviewUrls([]);
-                  setUploadingFiles([]);
+                  setPreviewItems([]);
                   setFormData({ title: '', description: '', location: '', year: '', month: '', day: '' });
                 }}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -241,32 +309,35 @@ export const Photos = () => {
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
-                  previewUrls.length > 0
+                  previewItems.length > 0
                     ? 'border-birthday-pink bg-birthday-pink/10'
                     : 'border-gray-300 hover:border-birthday-pink hover:bg-birthday-pink/5'
                 }`}
               >
-                {previewUrls.length > 0 ? (
+                {previewItems.length > 0 ? (
                   <div>
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      {previewUrls.map((url, index) => (
-                        <div key={index} className="relative">
-                          <img
-                            src={url}
-                            alt={`预览${index + 1}`}
-                            className="w-full aspect-square object-cover rounded-lg"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removePreview(index)}
-                            className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full hover:bg-black/70"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handlePreviewDragEnd}
+                    >
+                      <SortableContext
+                        items={previewItems.map((item) => item.id)}
+                        strategy={rectSortingStrategy}
+                      >
+                        <div className="grid grid-cols-3 gap-2 mb-4">
+                          {previewItems.map((item) => (
+                            <SortablePreviewItem
+                              key={item.id}
+                              id={item.id}
+                              url={item.url}
+                              onRemove={() => removePreview(item.id)}
+                            />
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                    <p className="text-gray-600 mb-2">已选择 {previewUrls.length} 张照片</p>
+                      </SortableContext>
+                    </DndContext>
+                    <p className="text-gray-600 mb-2">已选择 {previewItems.length} 张照片（拖拽可调整顺序）</p>
                   </div>
                 ) : (
                   <div>
@@ -287,7 +358,7 @@ export const Photos = () => {
                   htmlFor="photo-upload"
                   className="inline-block mt-3 px-4 py-2 bg-birthday-pink text-white rounded-full cursor-pointer hover:bg-birthday-rose transition-colors"
                 >
-                  {previewUrls.length > 0 ? '添加更多照片' : '选择照片'}
+                  {previewItems.length > 0 ? '添加更多照片' : '选择照片'}
                 </label>
               </div>
 
@@ -388,8 +459,7 @@ export const Photos = () => {
                   type="button"
                   onClick={() => {
                     setIsUploadOpen(false);
-                    setPreviewUrls([]);
-                    setUploadingFiles([]);
+                    setPreviewItems([]);
                     setFormData({ title: '', description: '', location: '', year: '', month: '', day: '' });
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
@@ -398,7 +468,7 @@ export const Photos = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={uploadingFiles.length === 0}
+                  disabled={previewItems.length === 0}
                   className="flex-1 px-4 py-2 bg-birthday-pink text-white rounded-lg hover:bg-birthday-rose transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
                   <Heart className="w-4 h-4" />

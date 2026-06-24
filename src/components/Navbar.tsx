@@ -18,8 +18,13 @@ export const Navbar = () => {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl">🎂</span>
-            <span className="text-xl font-bold text-gray-800">秘密基地</span>
+            <span className="text-2xl">💛</span>
+            <span 
+              className="text-xl font-bold bg-gradient-to-r from-pink-500 via-rose-400 to-purple-400 bg-clip-text text-transparent"
+              style={{ fontFamily: "'Dancing Script', 'ZCOOL KuaiLe', cursive" }}
+            >
+              LOVE From 闲
+            </span>
           </Link>
 
           <div className="hidden md:flex items-center space-x-1">

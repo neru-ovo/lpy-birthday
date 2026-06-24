@@ -12,6 +12,7 @@ export interface PhotoAlbum {
   location: string;
   date: string;
   photos: PhotoItem[];
+  orderIndex: number;
 }
 
 export interface Diary {
@@ -21,6 +22,7 @@ export interface Diary {
   location: string;
   date: string;
   imageUrls: string[];
+  orderIndex: number;
 }
 
 export interface Message {

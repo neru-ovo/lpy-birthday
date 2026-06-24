@@ -8,8 +8,8 @@ interface Store {
   diaries: Diary[];
   messages: Message[];
   loading: boolean;
-  addPhotoAlbum: (album: Omit<PhotoAlbum, 'id'>) => Promise<void>;
-  addDiary: (diary: Omit<Diary, 'id'>) => Promise<void>;
+  addPhotoAlbum: (album: Omit<PhotoAlbum, 'id' | 'orderIndex'>) => Promise<void>;
+  addDiary: (diary: Omit<Diary, 'id' | 'orderIndex'>) => Promise<void>;
   addMessage: (message: Omit<Message, 'id'>) => Promise<void>;
   updateMessage: (id: string, message: Partial<Message>) => Promise<void>;
   updatePhotoAlbum: (id: string, album: Partial<PhotoAlbum>) => Promise<void>;
@@ -36,6 +36,7 @@ const convertPhotoAlbum = (row: any): PhotoAlbum => ({
   location: row.location || '',
   date: row.date || '',
   photos: typeof row.photos === 'string' ? JSON.parse(row.photos) : (row.photos || []),
+  orderIndex: row.order_index ?? 0,
 });
 
 const convertDiary = (row: any): Diary => ({
@@ -45,6 +46,7 @@ const convertDiary = (row: any): Diary => ({
   location: row.location || '',
   date: row.date || '',
   imageUrls: typeof row.image_urls === 'string' ? JSON.parse(row.image_urls) : (row.image_urls || []),
+  orderIndex: row.order_index ?? 0,
 });
 
 const convertMessage = (row: any): Message => ({
@@ -76,8 +78,8 @@ export const useStore = create<Store>((set, get) => ({
     set({ loading: true });
     try {
       const [albumsRes, diariesRes, messagesRes] = await Promise.all([
-        supabase.from('photo_albums').select('*').order('id', { ascending: false }),
-        supabase.from('diaries').select('*').order('id', { ascending: false }),
+        supabase.from('photo_albums').select('*').order('order_index', { ascending: true }),
+        supabase.from('diaries').select('*').order('order_index', { ascending: true }),
         supabase.from('messages').select('*').order('id', { ascending: false }),
       ]);
 
@@ -104,32 +106,42 @@ export const useStore = create<Store>((set, get) => ({
   },
 
   addPhotoAlbum: async (album) => {
+    const maxOrder = get().photoAlbums.length > 0 
+      ? Math.max(...get().photoAlbums.map(a => a.orderIndex)) 
+      : -1;
+    
     const { data, error } = await supabase.from('photo_albums').insert({
       title: album.title,
       description: album.description,
       location: album.location,
       date: album.date,
       photos: JSON.stringify(album.photos),
+      order_index: maxOrder + 1,
     }).select();
 
     if (error) throw error;
     if (data && data[0]) {
-      set((state) => ({ photoAlbums: [convertPhotoAlbum(data[0]), ...state.photoAlbums] }));
+      set((state) => ({ photoAlbums: [...state.photoAlbums, convertPhotoAlbum(data[0])] }));
     }
   },
 
   addDiary: async (diary) => {
+    const maxOrder = get().diaries.length > 0 
+      ? Math.max(...get().diaries.map(d => d.orderIndex)) 
+      : -1;
+    
     const { data, error } = await supabase.from('diaries').insert({
       title: diary.title,
       content: diary.content,
       location: diary.location,
       date: diary.date,
       image_urls: JSON.stringify(diary.imageUrls),
+      order_index: maxOrder + 1,
     }).select();
 
     if (error) throw error;
     if (data && data[0]) {
-      set((state) => ({ diaries: [convertDiary(data[0]), ...state.diaries] }));
+      set((state) => ({ diaries: [...state.diaries, convertDiary(data[0])] }));
     }
   },
 
@@ -262,18 +274,18 @@ export const useStore = create<Store>((set, get) => ({
   },
 
   reorderPhotoAlbums: async (albums) => {
-    for (let i = 0; i < albums.length; i++) {
-      await supabase.from('photo_albums').update({ id: albums.length - i }).eq('id', albums[i].id);
-    }
-    set({ photoAlbums: albums });
-    await get().loadFromSupabase();
+    const updates = albums.map((album, index) => 
+      supabase.from('photo_albums').update({ order_index: index }).eq('id', album.id)
+    );
+    await Promise.all(updates);
+    set({ photoAlbums: albums.map((album, index) => ({ ...album, orderIndex: index })) });
   },
 
   reorderDiaries: async (diaries) => {
-    for (let i = 0; i < diaries.length; i++) {
-      await supabase.from('diaries').update({ id: diaries.length - i }).eq('id', diaries[i].id);
-    }
-    set({ diaries });
-    await get().loadFromSupabase();
+    const updates = diaries.map((diary, index) => 
+      supabase.from('diaries').update({ order_index: index }).eq('id', diary.id)
+    );
+    await Promise.all(updates);
+    set({ diaries: diaries.map((diary, index) => ({ ...diary, orderIndex: index })) });
   },
 }));

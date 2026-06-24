@@ -9,6 +9,7 @@ export const mockPhotoAlbums: PhotoAlbum[] = [
     description: '海边的风景总是那么治愈，和你一起看海的时光最难忘',
     location: '红海湾',
     date: '2023',
+    orderIndex: 0,
     photos: [
       { id: 'p1', url: getPhotoUrl('微信图片_20260623154640_106_16.jpg'), description: '海边的风景', likes: 0 },
       { id: 'p2', url: getPhotoUrl('微信图片_20260623154642_107_16.jpg'), description: '和你一起看海', likes: 0 },
@@ -23,6 +24,7 @@ export const mockPhotoAlbums: PhotoAlbum[] = [
     description: '一起探索城市的角落',
     location: '禅城',
     date: '2024',
+    orderIndex: 1,
     photos: [
       { id: 'p6', url: getPhotoUrl('微信图片_20260623154649_112_16.jpg'), description: '城市漫步', likes: 0 },
       { id: 'p7', url: getPhotoUrl('微信图片_20260623154650_113_16.jpg'), description: '禅城街头', likes: 0 },
@@ -35,6 +37,7 @@ export const mockPhotoAlbums: PhotoAlbum[] = [
     description: '顺德美食之旅',
     location: '顺德',
     date: '2024',
+    orderIndex: 2,
     photos: [
       { id: 'p9', url: getPhotoUrl('微信图片_20260623154652_114_16.jpg'), description: '美食之旅', likes: 0 },
       { id: 'p10', url: getPhotoUrl('微信图片_20260623154654_115_16.jpg'), description: '吃遍顺德', likes: 0 },
@@ -47,6 +50,7 @@ export const mockPhotoAlbums: PhotoAlbum[] = [
     description: '生活中的点点滴滴，都是美好的回忆',
     location: '日常',
     date: '2024',
+    orderIndex: 3,
     photos: [
       { id: 'p12', url: getPhotoUrl('微信图片_20260623154647_111_16.jpg'), description: '小确幸', likes: 0 },
       { id: 'p13', url: getPhotoUrl('微信图片_20260623154659_118_16.jpg'), description: '点点滴滴', likes: 0 },
@@ -63,6 +67,7 @@ export const mockPhotoAlbums: PhotoAlbum[] = [
     description: '一起征服山峰，欣赏美丽风景',
     location: '圭峰山',
     date: '2024',
+    orderIndex: 4,
     photos: [
       { id: 'p19', url: getPhotoUrl('微信图片_20260623154703_120_16.jpg'), description: '征服山峰', likes: 0 },
       { id: 'p20', url: getPhotoUrl('微信图片_20260623154706_122_16.jpg'), description: '欣赏风景', likes: 0 },
@@ -75,6 +80,7 @@ export const mockPhotoAlbums: PhotoAlbum[] = [
     description: '炎炎夏日，一起吃冰的快乐',
     location: '甜品店',
     date: '2024',
+    orderIndex: 5,
     photos: [
       { id: 'p22', url: getPhotoUrl('微信图片_20260623154714_126_16.jpg'), description: '夏日清凉', likes: 0 },
       { id: 'p23', url: getPhotoUrl('微信图片_20260623154716_127_16.jpg'), description: '一起吃冰', likes: 0 },
@@ -90,6 +96,7 @@ export const mockPhotoAlbums: PhotoAlbum[] = [
     description: '一起为喜欢的球队加油',
     location: '体育馆',
     date: '2024',
+    orderIndex: 6,
     photos: [
       { id: 'p28', url: getPhotoUrl('微信图片_20260623154721_130_16.jpg'), description: '为球队加油', likes: 0 },
       { id: 'p29', url: getPhotoUrl('微信图片_20260623154733_136_16.jpg'), description: '热血沸腾', likes: 0 },
@@ -102,6 +109,7 @@ export const mockPhotoAlbums: PhotoAlbum[] = [
     description: '顺德美食之旅',
     location: '顺德',
     date: '2024',
+    orderIndex: 7,
     photos: [
       { id: 'p31', url: getPhotoUrl('微信图片_20260623154730_134_16.jpg'), description: '美食之旅', likes: 0 },
       { id: 'p32', url: getPhotoUrl('微信图片_20260623154732_135_16.jpg'), description: '地道美食', likes: 0 },
@@ -113,6 +121,7 @@ export const mockPhotoAlbums: PhotoAlbum[] = [
     description: '公园散步，享受悠闲时光',
     location: '奎山公园',
     date: '2024',
+    orderIndex: 8,
     photos: [
       { id: 'p33', url: getPhotoUrl('微信图片_20260623154736_138_16.jpg'), description: '公园散步', likes: 0 },
       { id: 'p34', url: getPhotoUrl('微信图片_20260623154737_139_16.jpg'), description: '美好时光', likes: 0 },
@@ -126,6 +135,7 @@ export const mockPhotoAlbums: PhotoAlbum[] = [
     description: '青春不散场，友谊天长地久',
     location: '学校',
     date: '2024-06',
+    orderIndex: 9,
     photos: [
       { id: 'p37', url: getPhotoUrl('微信图片_20260623154743_142_16.jpg'), description: '毕业季', likes: 0 },
       { id: 'p38', url: getPhotoUrl('微信图片_20260623154745_143_16.jpg'), description: '青春不散', likes: 0 },
@@ -145,6 +155,7 @@ export const mockDiaries: Diary[] = [
     content: '今天和你一起去了红海湾，阳光、沙滩、大海，一切都太美了！我们在海边散步、拍照，听着海浪声，感觉所有的烦恼都消失了。晚上一起看了日落，整个天空都被染成了金色和粉色，真的太浪漫了。希望这样美好的时光能永远留在记忆里。',
     location: '红海湾',
     date: '2023',
+    orderIndex: 0,
     imageUrls: [
       getPhotoUrl('微信图片_20260623154640_106_16.jpg'),
       getPhotoUrl('微信图片_20260623154642_107_16.jpg'),
@@ -156,6 +167,7 @@ export const mockDiaries: Diary[] = [
     content: '一转眼就毕业了，回想我们一起度过的大学时光，真的有太多美好的回忆。从第一次见面的青涩，到现在的无话不谈，我们一起经历了太多。虽然即将各奔东西，但我相信我们的友谊会一直延续下去。祝你前程似锦，未来闪闪发光！',
     location: '学校',
     date: '2024-06',
+    orderIndex: 1,
     imageUrls: [
       getPhotoUrl('微信图片_20260623154743_142_16.jpg'),
       getPhotoUrl('微信图片_20260623154745_143_16.jpg'),
@@ -168,6 +180,7 @@ export const mockDiaries: Diary[] = [
     content: '今天和你一起去吃冰，简简单单的快乐却让人觉得很幸福。生活中的小确幸往往来自于和喜欢的人一起度过的时光。希望我们能一直这样，一起分享生活中的点点滴滴，一起创造更多美好的回忆。',
     location: '甜品店',
     date: '2024',
+    orderIndex: 2,
     imageUrls: [
       getPhotoUrl('微信图片_20260623154714_126_16.jpg'),
       getPhotoUrl('微信图片_20260623154716_127_16.jpg'),
