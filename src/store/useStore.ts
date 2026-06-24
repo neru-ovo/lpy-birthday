@@ -83,24 +83,22 @@ export const useStore = create<Store>((set, get) => ({
         supabase.from('messages').select('*').order('id', { ascending: false }),
       ]);
 
-      if (albumsRes.error) {
-        console.error('加载相册失败:', albumsRes.error);
-      }
-      if (diariesRes.error) {
-        console.error('加载日记失败:', diariesRes.error);
-      }
-      if (messagesRes.error) {
-        console.error('加载寄语失败:', messagesRes.error);
-      }
+      // 只有当 Supabase 有数据时才更新状态
+      const hasAlbums = albumsRes.data && albumsRes.data.length > 0;
+      const hasDiaries = diariesRes.data && diariesRes.data.length > 0;
 
-      const photoAlbums = albumsRes.data?.map(convertPhotoAlbum) || mockPhotoAlbums;
-      const diaries = diariesRes.data?.map(convertDiary) || mockDiaries;
-      const messages = messagesRes.data?.map(convertMessage) || mockMessages;
-
-      set({ photoAlbums, diaries, messages });
+      if (hasAlbums || hasDiaries) {
+        const photoAlbums = albumsRes.data?.map(convertPhotoAlbum) || get().photoAlbums;
+        const diaries = diariesRes.data?.map(convertDiary) || get().diaries;
+        const messages = messagesRes.data?.map(convertMessage) || get().messages;
+        set({ photoAlbums, diaries, messages });
+        console.log('从 Supabase 加载数据:', { albums: photoAlbums.length, diaries: diaries.length, messages: messages.length });
+      } else {
+        console.log('Supabase 无数据，使用本地数据');
+      }
     } catch (error) {
       console.error('加载数据异常:', error);
-      set({ photoAlbums: mockPhotoAlbums, diaries: mockDiaries, messages: mockMessages });
+      // 加载失败时保留本地数据，不覆盖
     }
     set({ loading: false });
   },

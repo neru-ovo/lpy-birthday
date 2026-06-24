@@ -73,7 +73,11 @@ export const Photos = () => {
   const { photoAlbums, addPhotoAlbum, reorderPhotoAlbums, uploadPhoto } = useStore();
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
