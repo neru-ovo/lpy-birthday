@@ -17,6 +17,8 @@ export const Messages = () => {
       title: formData.title || '寄语',
       content: formData.content,
       date: new Date().toISOString().split('T')[0],
+      cardColor: 'pink',
+      createdAt: new Date().toISOString(),
     });
 
     setIsCreateOpen(false);

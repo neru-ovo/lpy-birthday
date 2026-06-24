@@ -129,7 +129,7 @@ const SortablePhotoItem = ({
 
 export const PhotoDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { getPhotoAlbumById, updatePhotoAlbum, deletePhotoAlbum, reorderPhotos } = useStore();
+  const { getPhotoAlbumById, updatePhotoAlbum, deletePhotoAlbum, reorderPhotos, uploadPhoto } = useStore();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editingPhotoId, setEditingPhotoId] = useState<string | null>(null);
@@ -158,13 +158,16 @@ export const PhotoDetail = () => {
   });
 
   const [newPhotos, setNewPhotos] = useState<string[]>([]);
+  const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([]);
 
   const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       const urls: string[] = [...newPhotos];
+      const newFiles: File[] = [...newPhotoFiles];
       Array.from(files).forEach((file) => {
         if (file.type.startsWith('image/')) {
+          newFiles.push(file);
           const reader = new FileReader();
           reader.onload = (event) => {
             urls.push(event.target?.result as string);
@@ -173,11 +176,13 @@ export const PhotoDetail = () => {
           reader.readAsDataURL(file);
         }
       });
+      setNewPhotoFiles(newFiles);
     }
-  }, [newPhotos]);
+  }, [newPhotos, newPhotoFiles]);
 
   const removeNewPhoto = (index: number) => {
     setNewPhotos(newPhotos.filter((_, i) => i !== index));
+    setNewPhotoFiles(newPhotoFiles.filter((_, i) => i !== index));
   };
 
   if (!album) {
@@ -240,52 +245,68 @@ export const PhotoDetail = () => {
     return album.date;
   };
 
-  const handleSave = () => {
-    const newPhotosToAdd = newPhotos.map((url, index) => ({
-      id: `new-${Date.now()}-${index}`,
-      url,
-      description: '',
-      likes: 0,
-    }));
-    updatePhotoAlbum(album.id, {
-      title: editForm.title || album.title,
-      description: editForm.description,
-      location: editForm.location,
-      date: getDateValue(),
-      photos: [...album.photos, ...newPhotosToAdd],
-    });
-    setNewPhotos([]);
-    setIsEditing(false);
-    setIsDragMode(false);
+  const handleSave = async () => {
+    try {
+      let newPhotosToAdd = [];
+      if (newPhotoFiles.length > 0) {
+        const photoUrls = await Promise.all(
+          newPhotoFiles.map(async (file, index) => {
+            const path = `albums/${album.id}-${Date.now()}-${index}-${file.name}`;
+            return await uploadPhoto(file, path);
+          })
+        );
+        newPhotosToAdd = photoUrls.map((url, index) => ({
+          id: `new-${Date.now()}-${index}`,
+          url,
+          description: '',
+          likes: 0,
+        }));
+      }
+
+      await updatePhotoAlbum(album.id, {
+        title: editForm.title || album.title,
+        description: editForm.description,
+        location: editForm.location,
+        date: getDateValue(),
+        photos: [...album.photos, ...newPhotosToAdd],
+      });
+
+      setNewPhotos([]);
+      setNewPhotoFiles([]);
+      setIsEditing(false);
+      setIsDragMode(false);
+    } catch (error) {
+      alert('保存失败，请重试');
+    }
   };
 
-  const handlePhotoSave = (photoId: string) => {
+  const handlePhotoSave = async (photoId: string) => {
     const updatedPhotos = album.photos.map((p) =>
       p.id === photoId ? { ...p, description: photoEditForm.description } : p
     );
-    updatePhotoAlbum(album.id, { photos: updatedPhotos });
+    await updatePhotoAlbum(album.id, { photos: updatedPhotos });
     setEditingPhotoId(null);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
       const oldIndex = album.photos.findIndex((p) => p.id === active.id);
       const newIndex = album.photos.findIndex((p) => p.id === over.id);
       const newPhotos = arrayMove(album.photos, oldIndex, newIndex);
-      reorderPhotos(album.id, newPhotos.map((p) => p.id));
+      await reorderPhotos(album.id, newPhotos.map((p) => p.id));
     }
   };
 
-  const handleDeletePhoto = (photoId: string) => {
+  const handleDeletePhoto = async (photoId: string) => {
     const updatedPhotos = album.photos.filter((p) => p.id !== photoId);
-    updatePhotoAlbum(album.id, { photos: updatedPhotos });
+    await updatePhotoAlbum(album.id, { photos: updatedPhotos });
   };
 
-  const handleDeleteAlbum = () => {
+  const handleDeleteAlbum = async () => {
     if (window.confirm('确定要删除这个相册吗？')) {
-      deletePhotoAlbum(album.id);
+      await deletePhotoAlbum(album.id);
       navigate('/photos');
     }
   };
@@ -295,6 +316,7 @@ export const PhotoDetail = () => {
     setIsDragMode(false);
     setEditingPhotoId(null);
     setNewPhotos([]);
+    setNewPhotoFiles([]);
   };
 
   return (

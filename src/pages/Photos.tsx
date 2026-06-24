@@ -17,7 +17,8 @@ export const Photos = () => {
     day: '',
   });
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  const { photoAlbums, addPhotoAlbum, reorderPhotoAlbums } = useStore();
+  const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
+  const { photoAlbums, addPhotoAlbum, reorderPhotoAlbums, uploadPhoto } = useStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -26,14 +27,14 @@ export const Photos = () => {
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
       const oldIndex = photoAlbums.findIndex((album) => album.id === active.id);
       const newIndex = photoAlbums.findIndex((album) => album.id === over.id);
       const newAlbums = arrayMove(photoAlbums, oldIndex, newIndex);
-      reorderPhotoAlbums(newAlbums);
+      await reorderPhotoAlbums(newAlbums);
     }
   };
 
@@ -41,8 +42,10 @@ export const Photos = () => {
     const files = e.target.files;
     if (files) {
       const urls: string[] = [...previewUrls];
+      const newFiles: File[] = [...uploadingFiles];
       Array.from(files).forEach((file) => {
         if (file.type.startsWith('image/')) {
+          newFiles.push(file);
           const reader = new FileReader();
           reader.onload = (event) => {
             urls.push(event.target?.result as string);
@@ -51,11 +54,13 @@ export const Photos = () => {
           reader.readAsDataURL(file);
         }
       });
+      setUploadingFiles(newFiles);
     }
-  }, [previewUrls]);
+  }, [previewUrls, uploadingFiles]);
 
   const removePreview = (index: number) => {
     setPreviewUrls(previewUrls.filter((_, i) => i !== index));
+    setUploadingFiles(uploadingFiles.filter((_, i) => i !== index));
   };
 
   const getDateValue = () => {
@@ -69,33 +74,45 @@ export const Photos = () => {
     return '';
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (previewUrls.length === 0) return;
+    if (uploadingFiles.length === 0) return;
 
-    addPhotoAlbum({
-      title: formData.title || '未命名相册',
-      description: formData.description,
-      location: formData.location,
-      date: getDateValue() || new Date().toISOString().split('T')[0],
-      photos: previewUrls.map((url, index) => ({
-        id: `${Date.now()}-${index}`,
-        url,
+    try {
+      const photoUrls = await Promise.all(
+        uploadingFiles.map(async (file, index) => {
+          const path = `albums/${Date.now()}-${index}-${file.name}`;
+          return await uploadPhoto(file, path);
+        })
+      );
+
+      await addPhotoAlbum({
+        title: formData.title || '未命名相册',
+        description: formData.description,
+        location: formData.location,
+        date: getDateValue() || new Date().toISOString().split('T')[0],
+        photos: photoUrls.map((url, index) => ({
+          id: `${Date.now()}-${index}`,
+          url,
+          description: '',
+          likes: 0,
+        })),
+      });
+
+      setIsUploadOpen(false);
+      setPreviewUrls([]);
+      setUploadingFiles([]);
+      setFormData({
+        title: '',
         description: '',
-        likes: 0,
-      })),
-    });
-
-    setIsUploadOpen(false);
-    setPreviewUrls([]);
-    setFormData({
-      title: '',
-      description: '',
-      location: '',
-      year: '',
-      month: '',
-      day: '',
-    });
+        location: '',
+        year: '',
+        month: '',
+        day: '',
+      });
+    } catch (error) {
+      alert('上传失败，请重试');
+    }
   };
 
   const handleDrop = useCallback(
@@ -104,8 +121,10 @@ export const Photos = () => {
       const files = e.dataTransfer.files;
       if (files) {
         const urls: string[] = [...previewUrls];
+        const newFiles: File[] = [...uploadingFiles];
         Array.from(files).forEach((file) => {
           if (file.type.startsWith('image/')) {
+            newFiles.push(file);
             const reader = new FileReader();
             reader.onload = (event) => {
               urls.push(event.target?.result as string);
@@ -114,9 +133,10 @@ export const Photos = () => {
             reader.readAsDataURL(file);
           }
         });
+        setUploadingFiles(newFiles);
       }
     },
-    [previewUrls]
+    [previewUrls, uploadingFiles]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -202,6 +222,7 @@ export const Photos = () => {
                 onClick={() => {
                   setIsUploadOpen(false);
                   setPreviewUrls([]);
+                  setUploadingFiles([]);
                   setFormData({ title: '', description: '', location: '', year: '', month: '', day: '' });
                 }}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -363,6 +384,7 @@ export const Photos = () => {
                   onClick={() => {
                     setIsUploadOpen(false);
                     setPreviewUrls([]);
+                    setUploadingFiles([]);
                     setFormData({ title: '', description: '', location: '', year: '', month: '', day: '' });
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
@@ -371,7 +393,7 @@ export const Photos = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={previewUrls.length === 0}
+                  disabled={uploadingFiles.length === 0}
                   className="flex-1 px-4 py-2 bg-birthday-pink text-white rounded-lg hover:bg-birthday-rose transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                 >
                   <Heart className="w-4 h-4" />

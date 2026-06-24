@@ -181,5 +181,7 @@ export const mockMessages: Message[] = [
     title: '生日快乐！',
     content: '亲爱的宝贝，生日快乐！🎉\n\n不知不觉我们已经认识这么多年了，从青涩的校园时光到现在各自成长，你一直是我生命中最美好的存在。\n\n愿你新的一岁：\n✨ 眼里有光，心中有爱\n✨ 所到之处，皆是风景\n✨ 每一个梦想都能实现\n✨ 每一天都充满快乐和惊喜\n\n愿我们的友谊像这生日蛋糕一样，甜蜜又持久！永远爱你！❤️\n\n—— 你的好朋友',
     date: '2024',
+    cardColor: 'pink',
+    createdAt: new Date().toISOString(),
   },
 ];

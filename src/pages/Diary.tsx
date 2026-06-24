@@ -8,6 +8,7 @@ import { useStore } from '../store/useStore';
 export const Diary = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -16,7 +17,7 @@ export const Diary = () => {
     month: '',
     day: '',
   });
-  const { diaries, addDiary, reorderDiaries } = useStore();
+  const { diaries, addDiary, reorderDiaries, uploadPhoto } = useStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -25,14 +26,14 @@ export const Diary = () => {
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
       const oldIndex = diaries.findIndex((d) => d.id === active.id);
       const newIndex = diaries.findIndex((d) => d.id === over.id);
       const newDiaries = arrayMove(diaries, oldIndex, newIndex);
-      reorderDiaries(newDiaries);
+      await reorderDiaries(newDiaries);
     }
   };
 
@@ -40,8 +41,10 @@ export const Diary = () => {
     const files = e.target.files;
     if (files) {
       const urls: string[] = [...selectedImages];
+      const newFiles: File[] = [...uploadingFiles];
       Array.from(files).forEach((file) => {
         if (file.type.startsWith('image/')) {
+          newFiles.push(file);
           const reader = new FileReader();
           reader.onload = (event) => {
             urls.push(event.target?.result as string);
@@ -50,11 +53,13 @@ export const Diary = () => {
           reader.readAsDataURL(file);
         }
       });
+      setUploadingFiles(newFiles);
     }
-  }, [selectedImages]);
+  }, [selectedImages, uploadingFiles]);
 
   const removeImage = (index: number) => {
     setSelectedImages(selectedImages.filter((_, i) => i !== index));
+    setUploadingFiles(uploadingFiles.filter((_, i) => i !== index));
   };
 
   const getDateValue = () => {
@@ -68,27 +73,42 @@ export const Diary = () => {
     return '';
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    addDiary({
-      title: formData.title || '未命名日记',
-      content: formData.content,
-      location: formData.location,
-      date: getDateValue() || new Date().toISOString().split('T')[0],
-      imageUrls: selectedImages.length > 0 ? selectedImages : [],
-    });
+    try {
+      let imageUrls: string[] = [];
+      if (uploadingFiles.length > 0) {
+        imageUrls = await Promise.all(
+          uploadingFiles.map(async (file, index) => {
+            const path = `diaries/${Date.now()}-${index}-${file.name}`;
+            return await uploadPhoto(file, path);
+          })
+        );
+      }
 
-    setIsCreateOpen(false);
-    setSelectedImages([]);
-    setFormData({
-      title: '',
-      content: '',
-      location: '',
-      year: '',
-      month: '',
-      day: '',
-    });
+      await addDiary({
+        title: formData.title || '未命名日记',
+        content: formData.content,
+        location: formData.location,
+        date: getDateValue() || new Date().toISOString().split('T')[0],
+        imageUrls,
+      });
+
+      setIsCreateOpen(false);
+      setSelectedImages([]);
+      setUploadingFiles([]);
+      setFormData({
+        title: '',
+        content: '',
+        location: '',
+        year: '',
+        month: '',
+        day: '',
+      });
+    } catch (error) {
+      alert('保存失败，请重试');
+    }
   };
 
   const handleYearChange = (value: string) => {
@@ -170,6 +190,7 @@ export const Diary = () => {
                 onClick={() => {
                   setIsCreateOpen(false);
                   setSelectedImages([]);
+                  setUploadingFiles([]);
                   setFormData({ title: '', content: '', location: '', year: '', month: '', day: '' });
                 }}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -322,6 +343,7 @@ export const Diary = () => {
                   onClick={() => {
                     setIsCreateOpen(false);
                     setSelectedImages([]);
+                    setUploadingFiles([]);
                     setFormData({ title: '', content: '', location: '', year: '', month: '', day: '' });
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"

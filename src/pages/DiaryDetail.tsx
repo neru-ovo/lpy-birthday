@@ -61,7 +61,7 @@ const SortableImageItem = ({ image, index, onRemove }: SortableImageItemProps) =
 
 export const DiaryDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { getDiaryById, updateDiary, deleteDiary, reorderDiaryImages } = useStore();
+  const { getDiaryById, updateDiary, deleteDiary, uploadPhoto } = useStore();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const diary = getDiaryById(id || '');
@@ -76,6 +76,7 @@ export const DiaryDetail = () => {
   });
 
   const [editImages, setEditImages] = useState<string[]>([]);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -134,6 +135,7 @@ export const DiaryDetail = () => {
       day: dateParts[2] || '',
     });
     setEditImages([...diary.imageUrls]);
+    setNewImageFiles([]);
     setIsEditing(true);
   };
 
@@ -141,8 +143,10 @@ export const DiaryDetail = () => {
     const files = e.target.files;
     if (files) {
       const urls: string[] = [...editImages];
+      const newFiles: File[] = [...newImageFiles];
       Array.from(files).forEach((file) => {
         if (file.type.startsWith('image/')) {
+          newFiles.push(file);
           const reader = new FileReader();
           reader.onload = (event) => {
             urls.push(event.target?.result as string);
@@ -151,11 +155,13 @@ export const DiaryDetail = () => {
           reader.readAsDataURL(file);
         }
       });
+      setNewImageFiles(newFiles);
     }
-  }, [editImages]);
+  }, [editImages, newImageFiles]);
 
   const removeImage = (index: number) => {
     setEditImages(editImages.filter((_, i) => i !== index));
+    setNewImageFiles(newImageFiles.filter((_, i) => i !== index));
   };
 
   const getDateValue = () => {
@@ -169,20 +175,37 @@ export const DiaryDetail = () => {
     return diary.date;
   };
 
-  const handleSave = () => {
-    updateDiary(diary.id, {
-      title: editForm.title || diary.title,
-      content: editForm.content,
-      location: editForm.location,
-      date: getDateValue(),
-      imageUrls: editImages,
-    });
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      let finalImages = [...editImages];
+      const existingUrls = new Set(diary.imageUrls);
+
+      if (newImageFiles.length > 0) {
+        const uploadedUrls = await Promise.all(
+          newImageFiles.map(async (file, index) => {
+            const path = `diaries/${diary.id}-${Date.now()}-${index}-${file.name}`;
+            return await uploadPhoto(file, path);
+          })
+        );
+        finalImages = [...diary.imageUrls.filter(u => existingUrls.has(u)), ...uploadedUrls];
+      }
+
+      await updateDiary(diary.id, {
+        title: editForm.title || diary.title,
+        content: editForm.content,
+        location: editForm.location,
+        date: getDateValue(),
+        imageUrls: finalImages,
+      });
+      setIsEditing(false);
+    } catch (error) {
+      alert('保存失败，请重试');
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm('确定要删除这篇日记吗？')) {
-      deleteDiary(diary.id);
+      await deleteDiary(diary.id);
       navigate('/diary');
     }
   };

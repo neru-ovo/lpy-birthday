@@ -28,4 +28,6 @@ export interface Message {
   title: string;
   content: string;
   date: string;
+  cardColor: string;
+  createdAt: string;
 }

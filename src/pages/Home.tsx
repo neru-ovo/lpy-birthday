@@ -1,36 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Images, BookOpen, Heart, Calendar, Sparkles, Download, Upload } from 'lucide-react';
+import { Images, BookOpen, Heart, Calendar, Sparkles } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { useState } from 'react';
 
 export const Home = () => {
-  const { photoAlbums, diaries, messages, exportData, importData } = useStore();
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importText, setImportText] = useState('');
-
-  const handleExport = () => {
-    const data = exportData();
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'birthday-data.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImport = () => {
-    if (importText.trim()) {
-      const success = importData(importText);
-      if (success) {
-        alert('数据导入成功！');
-        setShowImportModal(false);
-        setImportText('');
-      } else {
-        alert('数据格式错误，请检查！');
-      }
-    }
-  };
+  const { photoAlbums, diaries, messages } = useStore();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-birthday-light via-white to-birthday-purple/20">
@@ -176,73 +149,10 @@ export const Home = () => {
       </section>
 
       <footer className="py-8 px-4 text-center border-t">
-        <div className="flex items-center justify-center space-x-4 mb-4">
-          <button
-            onClick={handleExport}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-colors text-sm"
-          >
-            <Download className="w-4 h-4" />
-            <span>导出数据</span>
-          </button>
-          <button
-            onClick={() => setShowImportModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-colors text-sm"
-          >
-            <Upload className="w-4 h-4" />
-            <span>导入数据</span>
-          </button>
-        </div>
         <p className="text-gray-500 text-sm">
           Happy Birthday © 2026 - 送给闲永远爱着的LPY
         </p>
       </footer>
-
-      {showImportModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-xl font-bold text-gray-800">导入数据</h2>
-              <button
-                onClick={() => {
-                  setShowImportModal(false);
-                  setImportText('');
-                }}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <span className="text-xl">×</span>
-              </button>
-            </div>
-            <div className="p-4">
-              <p className="text-gray-600 mb-4 text-sm">
-                将本地导出的数据粘贴到下方文本框，点击导入即可同步到线上网站。
-              </p>
-              <textarea
-                value={importText}
-                onChange={(e) => setImportText(e.target.value)}
-                className="w-full h-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-birthday-pink focus:border-transparent font-mono text-sm"
-                placeholder="粘贴导出的JSON数据..."
-              />
-              <div className="flex space-x-3 mt-4">
-                <button
-                  onClick={() => {
-                    setShowImportModal(false);
-                    setImportText('');
-                  }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  取消
-                </button>
-                <button
-                  onClick={handleImport}
-                  className="flex-1 px-4 py-2 bg-birthday-pink text-white rounded-lg hover:bg-birthday-rose transition-colors"
-                >
-                  导入数据
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
