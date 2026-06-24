@@ -1,31 +1,54 @@
 import { useState } from 'react';
-import { Plus, X, Heart, Sparkles } from 'lucide-react';
+import { Plus, X, Heart, Sparkles, Edit2 } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { Message } from '../types';
 
 export const Messages = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
   });
-  const { messages, addMessage, deleteMessage } = useStore();
+  const { messages, addMessage, updateMessage, deleteMessage } = useStore();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const openCreate = () => {
+    setEditingMessage(null);
+    setFormData({ title: '', content: '' });
+    setIsCreateOpen(true);
+  };
+
+  const openEdit = (message: Message) => {
+    setEditingMessage(message);
+    setFormData({ title: message.title, content: message.content });
+    setIsCreateOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    addMessage({
-      title: formData.title || '寄语',
-      content: formData.content,
-      date: new Date().toISOString().split('T')[0],
-      cardColor: 'pink',
-      createdAt: new Date().toISOString(),
-    });
-
-    setIsCreateOpen(false);
-    setFormData({
-      title: '',
-      content: '',
-    });
+    try {
+      if (editingMessage) {
+        await updateMessage(editingMessage.id, {
+          title: formData.title || '寄语',
+          content: formData.content,
+        });
+      } else {
+        await addMessage({
+          title: formData.title || '寄语',
+          content: formData.content,
+          date: new Date().toISOString().split('T')[0],
+          cardColor: 'pink',
+          createdAt: new Date().toISOString(),
+        });
+      }
+      setIsCreateOpen(false);
+      setFormData({ title: '', content: '' });
+      setEditingMessage(null);
+    } catch (error) {
+      alert('操作失败，请重试');
+      console.error(error);
+    }
   };
 
   return (
@@ -39,7 +62,7 @@ export const Messages = () => {
             <p className="text-gray-500 mt-1">世界上确实有很多东西不会一成不变，但是闲会永远爱你~</p>
           </div>
           <button
-            onClick={() => setIsCreateOpen(true)}
+            onClick={openCreate}
             className="flex items-center space-x-2 px-4 py-2 bg-birthday-rose text-white rounded-full hover:bg-red-500 transition-all duration-300 transform hover:scale-105 shadow-md"
           >
             <Plus className="w-5 h-5" />
@@ -55,7 +78,7 @@ export const Messages = () => {
             <h3 className="text-xl font-semibold text-gray-600 mb-2">还没有寄语</h3>
             <p className="text-gray-400 mb-6">写下你的第一份祝福吧！</p>
             <button
-              onClick={() => setIsCreateOpen(true)}
+              onClick={openCreate}
               className="px-6 py-3 bg-birthday-rose text-white rounded-full hover:bg-red-500 transition-all"
             >
               写寄语
@@ -68,12 +91,22 @@ export const Messages = () => {
                 key={message.id}
                 className="relative bg-gradient-to-br from-white via-birthday-pink/10 to-birthday-purple/10 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-birthday-pink/20"
               >
-                <button
-                  onClick={() => deleteMessage(message.id)}
-                  className="absolute top-4 right-4 p-1.5 bg-white/80 rounded-full hover:bg-red-100 hover:text-red-500 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="absolute top-4 right-4 flex space-x-1">
+                  <button
+                    onClick={() => openEdit(message)}
+                    className="p-1.5 bg-white/80 rounded-full hover:bg-blue-100 hover:text-blue-500 transition-colors"
+                    aria-label="编辑寄语"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteMessage(message.id)}
+                    className="p-1.5 bg-white/80 rounded-full hover:bg-red-100 hover:text-red-500 transition-colors"
+                    aria-label="删除寄语"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
 
                 <div className="text-center">
                   <div className="flex justify-center mb-4">
@@ -118,12 +151,13 @@ export const Messages = () => {
             <div className="flex items-center justify-between p-4 border-b border-birthday-pink/20">
               <h2 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
                 <Heart className="w-5 h-5 text-birthday-rose" />
-                <span>写一份寄语</span>
+                <span>{editingMessage ? '编辑寄语' : '写一份寄语'}</span>
               </h2>
               <button
                 onClick={() => {
                   setIsCreateOpen(false);
                   setFormData({ title: '', content: '' });
+                  setEditingMessage(null);
                 }}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
@@ -164,6 +198,7 @@ export const Messages = () => {
                   onClick={() => {
                     setIsCreateOpen(false);
                     setFormData({ title: '', content: '' });
+                    setEditingMessage(null);
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
                 >
@@ -174,7 +209,7 @@ export const Messages = () => {
                   className="flex-1 px-4 py-2 bg-birthday-rose text-white rounded-lg hover:bg-red-500 transition-colors flex items-center justify-center space-x-2"
                 >
                   <Heart className="w-4 h-4" />
-                  <span>发送祝福</span>
+                  <span>{editingMessage ? '保存修改' : '发送祝福'}</span>
                 </button>
               </div>
             </form>

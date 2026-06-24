@@ -111,7 +111,9 @@ export const Photos = () => {
         day: '',
       });
     } catch (error) {
-      alert('上传失败，请重试');
+      console.error('上传失败:', error);
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      alert(`上传失败：${errorMessage}\n请检查网络连接和 Supabase 配置`);
     }
   };
 

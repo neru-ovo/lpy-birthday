@@ -11,6 +11,7 @@ interface Store {
   addPhotoAlbum: (album: Omit<PhotoAlbum, 'id'>) => Promise<void>;
   addDiary: (diary: Omit<Diary, 'id'>) => Promise<void>;
   addMessage: (message: Omit<Message, 'id'>) => Promise<void>;
+  updateMessage: (id: string, message: Partial<Message>) => Promise<void>;
   updatePhotoAlbum: (id: string, album: Partial<PhotoAlbum>) => Promise<void>;
   updateDiary: (id: string, diary: Partial<Diary>) => Promise<void>;
   likePhoto: (albumId: string, photoId: string) => Promise<void>;
@@ -80,12 +81,23 @@ export const useStore = create<Store>((set, get) => ({
         supabase.from('messages').select('*').order('id', { ascending: false }),
       ]);
 
+      if (albumsRes.error) {
+        console.error('加载相册失败:', albumsRes.error);
+      }
+      if (diariesRes.error) {
+        console.error('加载日记失败:', diariesRes.error);
+      }
+      if (messagesRes.error) {
+        console.error('加载寄语失败:', messagesRes.error);
+      }
+
       const photoAlbums = albumsRes.data?.map(convertPhotoAlbum) || mockPhotoAlbums;
       const diaries = diariesRes.data?.map(convertDiary) || mockDiaries;
       const messages = messagesRes.data?.map(convertMessage) || mockMessages;
 
       set({ photoAlbums, diaries, messages });
-    } catch {
+    } catch (error) {
+      console.error('加载数据异常:', error);
       set({ photoAlbums: mockPhotoAlbums, diaries: mockDiaries, messages: mockMessages });
     }
     set({ loading: false });
@@ -125,6 +137,7 @@ export const useStore = create<Store>((set, get) => ({
     const { data, error } = await supabase.from('messages').insert({
       title: message.title,
       content: message.content,
+      date: message.date,
       card_color: message.cardColor,
     }).select();
 
@@ -132,6 +145,23 @@ export const useStore = create<Store>((set, get) => ({
     if (data && data[0]) {
       set((state) => ({ messages: [convertMessage(data[0]), ...state.messages] }));
     }
+  },
+
+  updateMessage: async (id, message) => {
+    const updateData: Record<string, unknown> = {};
+    if (message.title !== undefined) updateData.title = message.title;
+    if (message.content !== undefined) updateData.content = message.content;
+    if (message.date !== undefined) updateData.date = message.date;
+    if (message.cardColor !== undefined) updateData.card_color = message.cardColor;
+
+    const { error } = await supabase.from('messages').update(updateData).eq('id', id);
+    if (error) throw error;
+
+    set((state) => ({
+      messages: state.messages.map((m) =>
+        m.id === id ? { ...m, ...message } : m
+      ),
+    }));
   },
 
   updatePhotoAlbum: async (id, album) => {
