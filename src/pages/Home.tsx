@@ -35,7 +35,7 @@ export const Home = () => {
               className="flex items-center space-x-2 px-6 py-3 bg-birthday-gold text-gray-800 rounded-full hover:bg-yellow-400 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <BookOpen className="w-5 h-5" />
-              <span>写日记</span>
+              <span>随便写点</span>
             </Link>
             <Link
               to="/messages"

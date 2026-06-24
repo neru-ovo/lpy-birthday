@@ -20,8 +20,8 @@ export const Navbar = () => {
           <Link to="/" className="flex items-center space-x-2">
             <span className="text-2xl">💛</span>
             <span 
-              className="text-xl font-bold bg-gradient-to-r from-pink-500 via-rose-400 to-purple-400 bg-clip-text text-transparent"
-              style={{ fontFamily: "'Dancing Script', 'ZCOOL KuaiLe', cursive" }}
+              className="text-xl font-bold text-gray-700"
+              style={{ fontFamily: "'Noto Serif SC', serif", letterSpacing: '0.05em' }}
             >
               LOVE From 闲
             </span>

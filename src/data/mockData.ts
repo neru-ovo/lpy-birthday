@@ -1,6 +1,6 @@
 import { PhotoAlbum, Diary, Message } from '../types';
 
-const getPhotoUrl = (filename: string) => `${import.meta.env.BASE_URL}photos/${filename}`;
+const getPhotoUrl = (filename: string) => `/photos/${filename}`;
 
 export const mockPhotoAlbums: PhotoAlbum[] = [
   {
