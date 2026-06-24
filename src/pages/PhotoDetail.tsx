@@ -251,7 +251,10 @@ export const PhotoDetail = () => {
       if (newPhotoFiles.length > 0) {
         const photoUrls = await Promise.all(
           newPhotoFiles.map(async (file, index) => {
-            const path = `albums/${album.id}-${Date.now()}-${index}-${file.name}`;
+            // 处理文件名：移除中文字符，只保留扩展名
+            const ext = file.name.split('.').pop() || 'jpg';
+            const safeName = `${album.id}-${Date.now()}-${index}.${ext}`;
+            const path = `albums/${safeName}`;
             return await uploadPhoto(file, path);
           })
         );

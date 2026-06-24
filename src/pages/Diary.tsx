@@ -81,7 +81,10 @@ export const Diary = () => {
       if (uploadingFiles.length > 0) {
         imageUrls = await Promise.all(
           uploadingFiles.map(async (file, index) => {
-            const path = `diaries/${Date.now()}-${index}-${file.name}`;
+            // 处理文件名：移除中文字符，只保留扩展名
+            const ext = file.name.split('.').pop() || 'jpg';
+            const safeName = `${Date.now()}-${index}.${ext}`;
+            const path = `diaries/${safeName}`;
             return await uploadPhoto(file, path);
           })
         );
