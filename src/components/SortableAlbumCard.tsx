@@ -21,19 +21,20 @@ export const SortableAlbumCard = ({ album }: SortableAlbumCardProps) => {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.4 : 1,
+    willChange: 'transform',
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative ${isDragging ? 'z-50' : ''}`}
+      className={`relative ${isDragging ? 'z-50 shadow-2xl scale-105' : ''}`}
     >
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-2 left-2 z-10 p-2 bg-white/80 rounded-full cursor-grab active:cursor-grabbing hover:bg-white transition-colors"
+        className="absolute top-2 left-2 z-10 p-2 bg-white/90 rounded-full cursor-grab active:cursor-grabbing hover:bg-white hover:scale-110 transition-all shadow-md"
       >
         <GripVertical className="w-4 h-4 text-gray-500" />
       </div>

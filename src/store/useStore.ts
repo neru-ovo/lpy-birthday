@@ -272,18 +272,26 @@ export const useStore = create<Store>((set, get) => ({
   },
 
   reorderPhotoAlbums: async (albums) => {
-    const updates = albums.map((album, index) => 
-      supabase.from('photo_albums').update({ order_index: index }).eq('id', album.id)
+    const reorderedAlbums = albums.map((album, index) => ({ ...album, orderIndex: index }));
+    set({ photoAlbums: reorderedAlbums });
+    
+    const updates = reorderedAlbums.map((album) => 
+      supabase.from('photo_albums').update({ order_index: album.orderIndex }).eq('id', album.id)
     );
-    await Promise.all(updates);
-    set({ photoAlbums: albums.map((album, index) => ({ ...album, orderIndex: index })) });
+    await Promise.all(updates).catch((error) => {
+      console.error('更新相册顺序失败:', error);
+    });
   },
 
   reorderDiaries: async (diaries) => {
-    const updates = diaries.map((diary, index) => 
-      supabase.from('diaries').update({ order_index: index }).eq('id', diary.id)
+    const reorderedDiaries = diaries.map((diary, index) => ({ ...diary, orderIndex: index }));
+    set({ diaries: reorderedDiaries });
+    
+    const updates = reorderedDiaries.map((diary) => 
+      supabase.from('diaries').update({ order_index: diary.orderIndex }).eq('id', diary.id)
     );
-    await Promise.all(updates);
-    set({ diaries: diaries.map((diary, index) => ({ ...diary, orderIndex: index })) });
+    await Promise.all(updates).catch((error) => {
+      console.error('更新日记顺序失败:', error);
+    });
   },
 }));
