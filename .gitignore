@@ -18,5 +18,6 @@ dist-ssr
 # Trae IDE files
 .trae/
 
-# Photo folders (stored in Supabase for user uploads, but public/photos is included for mock data)
+# Photo folders (stored in Supabase)
+public/photos/
 照片_*/

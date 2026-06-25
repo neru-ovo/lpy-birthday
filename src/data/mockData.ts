@@ -1,6 +1,11 @@
 import { PhotoAlbum, Diary, Message } from '../types';
 
-const getPhotoUrl = (filename: string) => `${import.meta.env.BASE_URL}photos/${filename}`;
+const SUPABASE_STORAGE_URL = 'https://cameaxpyeehhaqjktpfq.supabase.co/storage/v1/object/public/birthday-photos';
+
+const getPhotoUrl = (filename: string) => {
+  const safeName = filename.replace(/[\u4e00-\u9fa5]/g, '_').replace(/[^a-zA-Z0-9._-]/g, '_');
+  return `${SUPABASE_STORAGE_URL}/mock-photos/${safeName}`;
+};
 
 export const mockPhotoAlbums: PhotoAlbum[] = [
   {

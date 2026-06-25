@@ -58,6 +58,27 @@ const convertMessage = (row: any): Message => ({
   createdAt: row.created_at || new Date().toISOString(),
 });
 
+const migrateOrderIndex = async () => {
+  try {
+    const { data: albums } = await supabase.from('photo_albums').select('id');
+    if (albums) {
+      for (let i = 0; i < albums.length; i++) {
+        await supabase.from('photo_albums').update({ order_index: i }).eq('id', albums[i].id);
+      }
+    }
+
+    const { data: diaries } = await supabase.from('diaries').select('id');
+    if (diaries) {
+      for (let i = 0; i < diaries.length; i++) {
+        await supabase.from('diaries').update({ order_index: i }).eq('id', diaries[i].id);
+      }
+    }
+    console.log('✓ order_index 字段迁移完成');
+  } catch (error) {
+    console.error('迁移 order_index 失败:', error);
+  }
+};
+
 export const useStore = create<Store>((set, get) => ({
   photoAlbums: mockPhotoAlbums,
   diaries: mockDiaries,
@@ -91,33 +112,20 @@ export const useStore = create<Store>((set, get) => ({
         let diaries = diariesRes.data?.map(convertDiary) || get().diaries;
         const messages = messagesRes.data?.map(convertMessage) || get().messages;
 
-        const savedOrder = localStorage.getItem('photoAlbumsOrder');
-        if (savedOrder) {
-          try {
-            const orderMap: Record<string, number> = JSON.parse(savedOrder);
-            photoAlbums = [...photoAlbums].sort((a, b) => {
-              const orderA = orderMap[a.id] !== undefined ? orderMap[a.id] : a.orderIndex;
-              const orderB = orderMap[b.id] !== undefined ? orderMap[b.id] : b.orderIndex;
-              return orderA - orderB;
-            });
-          } catch (e) {
-            console.error('解析保存的排序失败:', e);
+        const firstAlbum = photoAlbums[0];
+        if (firstAlbum && firstAlbum.orderIndex === 0 && photoAlbums.length > 1) {
+          const hasDifferentOrder = photoAlbums.some((a, i) => a.orderIndex !== i);
+          if (!hasDifferentOrder) {
+            const needsMigration = photoAlbums.every(a => a.orderIndex === 0);
+            if (needsMigration) {
+              await migrateOrderIndex();
+              photoAlbums = photoAlbums.map((a, i) => ({ ...a, orderIndex: i }));
+            }
           }
         }
 
-        const savedDiaryOrder = localStorage.getItem('diariesOrder');
-        if (savedDiaryOrder) {
-          try {
-            const orderMap: Record<string, number> = JSON.parse(savedDiaryOrder);
-            diaries = [...diaries].sort((a, b) => {
-              const orderA = orderMap[a.id] !== undefined ? orderMap[a.id] : a.orderIndex;
-              const orderB = orderMap[b.id] !== undefined ? orderMap[b.id] : b.orderIndex;
-              return orderA - orderB;
-            });
-          } catch (e) {
-            console.error('解析保存的日记排序失败:', e);
-          }
-        }
+        photoAlbums = [...photoAlbums].sort((a, b) => a.orderIndex - b.orderIndex);
+        diaries = [...diaries].sort((a, b) => a.orderIndex - b.orderIndex);
 
         set({ photoAlbums, diaries, messages });
         console.log('从 Supabase 加载数据:', { albums: photoAlbums.length, diaries: diaries.length, messages: messages.length });
@@ -126,19 +134,6 @@ export const useStore = create<Store>((set, get) => ({
       }
     } catch (error) {
       console.error('加载数据异常:', error);
-      const savedOrder = localStorage.getItem('photoAlbumsOrder');
-      if (savedOrder) {
-        try {
-          const orderMap: Record<string, number> = JSON.parse(savedOrder);
-          set((state) => ({
-            photoAlbums: [...state.photoAlbums].sort((a, b) => {
-              const orderA = orderMap[a.id] !== undefined ? orderMap[a.id] : a.orderIndex;
-              const orderB = orderMap[b.id] !== undefined ? orderMap[b.id] : b.orderIndex;
-              return orderA - orderB;
-            }),
-          }));
-        } catch (e) {}
-      }
     }
     set({ loading: false });
   },
@@ -315,12 +310,6 @@ export const useStore = create<Store>((set, get) => ({
     const reorderedAlbums = albums.map((album, index) => ({ ...album, orderIndex: index }));
     set({ photoAlbums: reorderedAlbums });
     
-    const orderMap: Record<string, number> = {};
-    reorderedAlbums.forEach((album, index) => {
-      orderMap[album.id] = index;
-    });
-    localStorage.setItem('photoAlbumsOrder', JSON.stringify(orderMap));
-    
     try {
       const updates = reorderedAlbums.map((album) => 
         supabase.from('photo_albums').update({ order_index: album.orderIndex }).eq('id', album.id)
@@ -334,12 +323,6 @@ export const useStore = create<Store>((set, get) => ({
   reorderDiaries: async (diaries) => {
     const reorderedDiaries = diaries.map((diary, index) => ({ ...diary, orderIndex: index }));
     set({ diaries: reorderedDiaries });
-    
-    const orderMap: Record<string, number> = {};
-    reorderedDiaries.forEach((diary, index) => {
-      orderMap[diary.id] = index;
-    });
-    localStorage.setItem('diariesOrder', JSON.stringify(orderMap));
     
     try {
       const updates = reorderedDiaries.map((diary) => 
