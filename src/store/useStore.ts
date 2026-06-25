@@ -78,19 +78,47 @@ export const useStore = create<Store>((set, get) => ({
     set({ loading: true });
     try {
       const [albumsRes, diariesRes, messagesRes] = await Promise.all([
-        supabase.from('photo_albums').select('*').order('order_index', { ascending: true }),
-        supabase.from('diaries').select('*').order('order_index', { ascending: true }),
+        supabase.from('photo_albums').select('*'),
+        supabase.from('diaries').select('*'),
         supabase.from('messages').select('*').order('id', { ascending: false }),
       ]);
 
-      // 只有当 Supabase 有数据时才更新状态
       const hasAlbums = albumsRes.data && albumsRes.data.length > 0;
       const hasDiaries = diariesRes.data && diariesRes.data.length > 0;
 
       if (hasAlbums || hasDiaries) {
-        const photoAlbums = albumsRes.data?.map(convertPhotoAlbum) || get().photoAlbums;
-        const diaries = diariesRes.data?.map(convertDiary) || get().diaries;
+        let photoAlbums = albumsRes.data?.map(convertPhotoAlbum) || get().photoAlbums;
+        let diaries = diariesRes.data?.map(convertDiary) || get().diaries;
         const messages = messagesRes.data?.map(convertMessage) || get().messages;
+
+        const savedOrder = localStorage.getItem('photoAlbumsOrder');
+        if (savedOrder) {
+          try {
+            const orderMap: Record<string, number> = JSON.parse(savedOrder);
+            photoAlbums = [...photoAlbums].sort((a, b) => {
+              const orderA = orderMap[a.id] !== undefined ? orderMap[a.id] : a.orderIndex;
+              const orderB = orderMap[b.id] !== undefined ? orderMap[b.id] : b.orderIndex;
+              return orderA - orderB;
+            });
+          } catch (e) {
+            console.error('解析保存的排序失败:', e);
+          }
+        }
+
+        const savedDiaryOrder = localStorage.getItem('diariesOrder');
+        if (savedDiaryOrder) {
+          try {
+            const orderMap: Record<string, number> = JSON.parse(savedDiaryOrder);
+            diaries = [...diaries].sort((a, b) => {
+              const orderA = orderMap[a.id] !== undefined ? orderMap[a.id] : a.orderIndex;
+              const orderB = orderMap[b.id] !== undefined ? orderMap[b.id] : b.orderIndex;
+              return orderA - orderB;
+            });
+          } catch (e) {
+            console.error('解析保存的日记排序失败:', e);
+          }
+        }
+
         set({ photoAlbums, diaries, messages });
         console.log('从 Supabase 加载数据:', { albums: photoAlbums.length, diaries: diaries.length, messages: messages.length });
       } else {
@@ -98,7 +126,19 @@ export const useStore = create<Store>((set, get) => ({
       }
     } catch (error) {
       console.error('加载数据异常:', error);
-      // 加载失败时保留本地数据，不覆盖
+      const savedOrder = localStorage.getItem('photoAlbumsOrder');
+      if (savedOrder) {
+        try {
+          const orderMap: Record<string, number> = JSON.parse(savedOrder);
+          set((state) => ({
+            photoAlbums: [...state.photoAlbums].sort((a, b) => {
+              const orderA = orderMap[a.id] !== undefined ? orderMap[a.id] : a.orderIndex;
+              const orderB = orderMap[b.id] !== undefined ? orderMap[b.id] : b.orderIndex;
+              return orderA - orderB;
+            }),
+          }));
+        } catch (e) {}
+      }
     }
     set({ loading: false });
   },
@@ -275,23 +315,39 @@ export const useStore = create<Store>((set, get) => ({
     const reorderedAlbums = albums.map((album, index) => ({ ...album, orderIndex: index }));
     set({ photoAlbums: reorderedAlbums });
     
-    const updates = reorderedAlbums.map((album) => 
-      supabase.from('photo_albums').update({ order_index: album.orderIndex }).eq('id', album.id)
-    );
-    await Promise.all(updates).catch((error) => {
-      console.error('更新相册顺序失败:', error);
+    const orderMap: Record<string, number> = {};
+    reorderedAlbums.forEach((album, index) => {
+      orderMap[album.id] = index;
     });
+    localStorage.setItem('photoAlbumsOrder', JSON.stringify(orderMap));
+    
+    try {
+      const updates = reorderedAlbums.map((album) => 
+        supabase.from('photo_albums').update({ order_index: album.orderIndex }).eq('id', album.id)
+      );
+      await Promise.all(updates);
+    } catch (error) {
+      console.error('更新相册顺序到 Supabase 失败:', error);
+    }
   },
 
   reorderDiaries: async (diaries) => {
     const reorderedDiaries = diaries.map((diary, index) => ({ ...diary, orderIndex: index }));
     set({ diaries: reorderedDiaries });
     
-    const updates = reorderedDiaries.map((diary) => 
-      supabase.from('diaries').update({ order_index: diary.orderIndex }).eq('id', diary.id)
-    );
-    await Promise.all(updates).catch((error) => {
-      console.error('更新日记顺序失败:', error);
+    const orderMap: Record<string, number> = {};
+    reorderedDiaries.forEach((diary, index) => {
+      orderMap[diary.id] = index;
     });
+    localStorage.setItem('diariesOrder', JSON.stringify(orderMap));
+    
+    try {
+      const updates = reorderedDiaries.map((diary) => 
+        supabase.from('diaries').update({ order_index: diary.orderIndex }).eq('id', diary.id)
+      );
+      await Promise.all(updates);
+    } catch (error) {
+      console.error('更新日记顺序到 Supabase 失败:', error);
+    }
   },
 }));
